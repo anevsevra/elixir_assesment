@@ -2,8 +2,8 @@ use Mix.Config
 
 # Configure your database
 config :elixir_assesment, ElixirAssesment.Repo,
-  username: "postgres",
-  password: "postgres",
+  username: "user",
+  password: "",
   database: "elixir_assesment_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
