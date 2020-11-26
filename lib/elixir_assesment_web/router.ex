@@ -18,7 +18,7 @@ defmodule ElixirAssesmentWeb.Router do
 
     scope "/v1", V1, as: :v1 do
       resources "/categories", CategoryController, except: [:new, :update, :edit]
-      resources "/posts", PostController, only: [:index]
+      resources "/posts", PostController, except: [:new, :update, :edit]
     end
   end
 
