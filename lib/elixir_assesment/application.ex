@@ -14,9 +14,12 @@ defmodule ElixirAssesment.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: ElixirAssesment.PubSub},
       # Start the Endpoint (http/https)
-      ElixirAssesmentWeb.Endpoint
+      ElixirAssesmentWeb.Endpoint,
       # Start a worker by calling: ElixirAssesment.Worker.start_link(arg)
       # {ElixirAssesment.Worker, arg}
+      {Task.Supervisor, name: ElixirAssesment.CategorizerTaskSupervisor},
+      {ElixirAssesmentServices.CategorizerProcess,
+       name: ElixirAssesmentServices.CategorizerProcess}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

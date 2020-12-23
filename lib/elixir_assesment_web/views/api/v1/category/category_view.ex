@@ -5,14 +5,14 @@ defmodule ElixirAssesmentWeb.Api.V1.CategoryView do
     %{
       data: %{
         categories:
-          render_many(categories, ElixirAssesmentWeb.Api.V1.CategoryView, "category.json")
+          render_many(categories, __MODULE__, "category.json")
       }
     }
   end
 
   def render("show.json", %{category: category}) do
     %{
-      data: render_one(category, ElixirAssesmentWeb.Api.V1.CategoryView, "category.json")
+      data: render_one(category, __MODULE__, "category.json")
     }
   end
 

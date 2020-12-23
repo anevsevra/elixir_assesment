@@ -4,10 +4,11 @@ defmodule ElixirAssesment.Datasets do
   """
 
   import Ecto.Query, warn: false
-  alias ElixirAssesment.Repo
 
+  alias ElixirAssesment.Repo
   alias ElixirAssesment.Datasets.Category
   alias ElixirAssesment.Datasets.Post
+  alias ElixirAssesmentServices.CategorizerProcess
 
   @doc """
   Returns the list of categories.
@@ -54,6 +55,14 @@ defmodule ElixirAssesment.Datasets do
     %Category{}
     |> Category.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, category} ->
+        CategorizerProcess.rebuild_index()
+        {:ok, category}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   @doc """
@@ -69,7 +78,16 @@ defmodule ElixirAssesment.Datasets do
 
   """
   def delete_category(id) do
-    from(Category, where: [id: ^id]) |> Repo.delete_all()
+    from(Category, where: [id: ^id])
+    |> Repo.delete_all()
+    |> case do
+      {count, nil} ->
+        CategorizerProcess.rebuild_index()
+        {count, nil}
+
+      {0, nil} ->
+        {0, nil}
+    end
   end
 
   @doc """
@@ -127,9 +145,15 @@ defmodule ElixirAssesment.Datasets do
 
   """
   def create_post(attrs \\ %{}) do
-    %Post{}
-    |> Post.changeset(attrs)
-    |> Repo.insert()
+    with {:ok, post} <-
+           %Post{}
+           |> Post.changeset(attrs)
+           |> Repo.insert() do
+      CategorizerProcess.run_categorization(post)
+      {:ok, post}
+    else
+      {:error, changeset} -> {:error, changeset}
+    end
   end
 
   @doc """
@@ -177,5 +201,15 @@ defmodule ElixirAssesment.Datasets do
   """
   def change_post(%Post{} = post, attrs \\ %{}) do
     Post.changeset(post, attrs)
+  end
+
+  def update_post_and_link_to_categories(post, post_params, category_ids) do
+    categories = Repo.all(from c in Category, where: c.id in ^category_ids)
+
+    post
+    |> Repo.preload(:categories)
+    |> change_post(post_params)
+    |> Ecto.Changeset.put_assoc(:categories, categories)
+    |> Repo.update()
   end
 end
