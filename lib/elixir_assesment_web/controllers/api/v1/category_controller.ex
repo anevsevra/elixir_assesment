@@ -1,23 +1,23 @@
 defmodule ElixirAssesmentWeb.Api.V1.CategoryController do
   use ElixirAssesmentWeb, :controller
 
-  alias ElixirAssesment.Datasets
+  alias ElixirAssesment.Datasets.Category
   alias ElixirAssesmentWeb.ErrorHelpers
 
   def index(conn, _) do
     conn
-    |> render(:index, categories: Datasets.list_categories())
+    |> render(:index, categories: Category.list_categories())
   end
 
   def show(conn, params) do
-    category = Datasets.get_category!(params["id"])
+    category = Category.get_category!(params["id"])
 
     conn
     |> render(:show, category: category)
   end
 
   def create(conn, params) do
-    case Datasets.create_category(params) do
+    case Category.create_category(params) do
       {:ok, category} ->
         conn
         |> put_status(:created)
@@ -35,7 +35,7 @@ defmodule ElixirAssesmentWeb.Api.V1.CategoryController do
   end
 
   def delete(conn, params) do
-    case Datasets.delete_category(params["id"]) do
+    case Category.delete_category(params["id"]) do
       {1, _} -> conn |> send_resp(200, "")
       {0, _} -> conn |> send_resp(400, "")
     end

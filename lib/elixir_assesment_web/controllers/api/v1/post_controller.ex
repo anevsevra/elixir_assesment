@@ -1,23 +1,23 @@
 defmodule ElixirAssesmentWeb.Api.V1.PostController do
   use ElixirAssesmentWeb, :controller
 
-  alias ElixirAssesment.Datasets
+  alias ElixirAssesment.Datasets.Post
   alias ElixirAssesmentWeb.ErrorHelpers
 
   def index(conn, _) do
     conn
-    |> render(:index, posts: Datasets.list_posts())
+    |> render(:index, posts: Post.list_posts())
   end
 
   def show(conn, params) do
-    post = Datasets.get_post!(params["id"])
+    post = Post.get_post!(params["id"])
 
     conn
     |> render(:show, post: post)
   end
 
   def create(conn, params) do
-    case Datasets.create_post(params) do
+    case Post.create_post(params) do
       {:ok, post} ->
         conn
         |> put_status(:created)
@@ -35,7 +35,7 @@ defmodule ElixirAssesmentWeb.Api.V1.PostController do
   end
 
   def delete(conn, params) do
-    case Datasets.delete_post(params["id"]) do
+    case Post.delete_post(params["id"]) do
       {1, _} -> conn |> send_resp(200, "")
       {0, _} -> conn |> send_resp(400, "")
     end
