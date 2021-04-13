@@ -19,13 +19,22 @@ defmodule ElixirAssesment.Datasets.Post do
     timestamps()
   end
 
+  @spec changeset(
+          {map, map}
+          | %{
+              :__struct__ => atom | %{:__changeset__ => map, optional(any) => any},
+              optional(atom) => any
+            },
+          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any},
+          keyword(list(%ElixirAssesment.Datasets.Category{})) | nil
+        ) :: Ecto.Changeset.t()
   @doc false
-  def changeset(post, attrs) do
+  def changeset(post, attrs, associations \\ nil) do
     post
     |> cast(attrs, [:title, :text, :status, :published_at])
     |> validate_required([:title, :text])
+    |> update_associations(associations)
   end
-
 
   def list_posts do
     Repo.all(Post)
@@ -105,14 +114,32 @@ defmodule ElixirAssesment.Datasets.Post do
     from(Post, where: [id: ^id]) |> Repo.delete_all()
   end
 
-
   def update_post_and_link_to_categories(post, post_params, category_ids) do
     categories = Repo.all(from c in Category, where: c.id in ^category_ids)
 
     post
     |> Repo.preload(:categories)
-    |> changeset(post_params)
-    |> Ecto.Changeset.put_assoc(:categories, categories)
+    |> changeset(post_params, categories: categories)
     |> Repo.update()
+  end
+
+  @spec update_associations(
+          Ecto.Changeset.t(),
+          nil | keyword(list(%ElixirAssesment.Datasets.Category{}))
+        ) :: Ecto.Changeset.t()
+  defp update_associations(post_changeset, nil), do: post_changeset
+
+  defp update_associations(post_changeset, associations) do
+    Enum.reduce(
+      associations,
+      post_changeset,
+      fn assoc, acc ->
+        put_assoc(
+          acc,
+          elem(assoc, 0),
+          elem(assoc, 1)
+        )
+      end
+    )
   end
 end
