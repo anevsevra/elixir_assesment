@@ -4,9 +4,9 @@ defmodule ElixirAssesmentWeb.Api.V1.PostController do
   alias ElixirAssesment.Datasets.Post
   alias ElixirAssesmentWeb.ErrorHelpers
 
-  def index(conn, _) do
+  def index(conn, params) do
     conn
-    |> render(:index, posts: Post.list_posts())
+    |> render(:index, posts: Post.list_posts(params))
   end
 
   def show(conn, params) do

@@ -5,7 +5,7 @@ defmodule ElixirAssesmentServices.Categorizer do
 
   @spec call(
           %ElixirAssesment.Datasets.Post{},
-          %{optional(String.t()) => integer()}
+          ElixirAssesmentServices.CategorizerProcess.index()
         ) ::
           {
             :ok,
@@ -16,7 +16,7 @@ defmodule ElixirAssesmentServices.Categorizer do
     match_in_index(index, words_list(post)) |> categorize(post)
   end
 
-  @spec categorize([%{id: integer(), moderation: boolean()}], %ElixirAssesment.Datasets.Post{}) ::
+  @spec categorize([%{id: [integer()], moderation: boolean()}], %ElixirAssesment.Datasets.Post{}) ::
           {
             :ok,
             %ElixirAssesment.Datasets.Post{}
@@ -30,7 +30,8 @@ defmodule ElixirAssesmentServices.Categorizer do
   end
 
   defp categorize(matched_categories, post) do
-    category_ids = Enum.reduce(matched_categories, [], fn c, acc -> [c.id | acc] end)
+    category_ids =
+      Enum.reduce(matched_categories, [], fn c, acc -> List.flatten(c.id, acc) end)
 
     cond do
       Enum.any?(
@@ -55,7 +56,7 @@ defmodule ElixirAssesmentServices.Categorizer do
   @spec match_in_index(
           ElixirAssesmentServices.CategorizerProcess.index(),
           [String.t()]
-        ) :: [%{id: integer(), moderation: boolean()}]
+        ) :: [%{id: [integer()], moderation: boolean()}]
   defp match_in_index(index, words) do
     Map.take(index, words) |> Map.values()
   end

@@ -5,7 +5,7 @@ defmodule ElixirAssesmentServices.CategorizerProcess do
   alias ElixirAssesment.CategorizerTaskSupervisor
   alias ElixirAssesmentServices.Categorizer
 
-  @type index() :: %{optional(String.t()) => %{id: integer(), moderation: boolean()}}
+  @type index() :: %{optional(String.t()) => %{id: [integer()], moderation: boolean()}}
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, :ok, opts)
@@ -57,28 +57,37 @@ defmodule ElixirAssesmentServices.CategorizerProcess do
     Category.list_categories()
     |> Enum.reduce(
       %{},
-      fn category, acc ->
-        Enum.reduce(
-          category.keywords,
-          %{},
-          fn keyword, inner_acc ->
-            Map.put(inner_acc, keyword, %{
-              id: category.id,
-              moderation: category.need_moderation
-            })
-          end
-        )
-        |> Map.merge(
-          acc,
-          fn _k, v1, v2 ->
-            cond do
-              v1.moderation -> v1
-              v2.moderation -> v2
-              true -> v1
-            end
-          end
-        )
+      &reduce_category/2
+    )
+  end
+
+  @spec reduce_category(%Category{}, %{}) :: index()
+  defp reduce_category(category, acc) do
+    Enum.reduce(
+      category.keywords,
+      %{},
+      fn keyword, inner_acc ->
+        Map.put(inner_acc, keyword, %{
+          id: [category.id],
+          moderation: category.need_moderation
+        })
       end
     )
+    |> Map.merge(
+      acc,
+      &merge_index_keys/3
+    )
+  end
+
+  @spec merge_index_keys(
+          atom(),
+          %{id: [integer(), ...], moderation: boolean()},
+          %{id: [integer(), ...], moderation: boolean()}
+        ) :: %{id: [integer(), ...], moderation: boolean()}
+  defp merge_index_keys(_, val1, val2) do
+    %{
+      id: [val1.id | val2.id],
+      moderation: Enum.any?([val1, val2], fn i -> i.moderation end)
+    }
   end
 end

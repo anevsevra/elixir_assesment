@@ -36,8 +36,16 @@ defmodule ElixirAssesment.Datasets.Post do
     |> update_associations(associations)
   end
 
-  def list_posts do
-    Repo.all(Post)
+  @spec list_posts(%{optional(String.t()) => any()}) :: [%Post{}]
+  def list_posts(query_params \\ %{}) do
+    Map.keys(query_params)
+    |> Enum.reduce(
+      from(p in Post),
+      fn key, query ->
+        query |> query_posts(Map.take(query_params, [key]))
+      end
+    )
+    |> Repo.all()
   end
 
   @doc """
@@ -141,5 +149,26 @@ defmodule ElixirAssesment.Datasets.Post do
         )
       end
     )
+  end
+
+  defp query_posts(query, %{"title" => title}) do
+    query |> where([p], p.title == ^title)
+  end
+
+  defp query_posts(query, %{"categories" => categories}) do
+    prepared_categories_list = Map.values(categories)
+    query |> join(:inner, [p], c in assoc(p, :categories)) |> where([_, c], c.tag in ^prepared_categories_list)
+  end
+
+  defp query_posts(query, %{"status" => status}) do
+    query |> where([p], p.status == ^status)
+  end
+
+  defp query_posts(query, %{"created_at_from" => inserted_at_from}) do
+    query |> where([p], p.inserted_at >= ^inserted_at_from)
+  end
+
+  defp query_posts(query, %{"created_at_to" => inserted_at_to}) do
+    query |> where([p], p.inserted_at < ^inserted_at_to)
   end
 end
